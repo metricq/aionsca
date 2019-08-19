@@ -75,24 +75,24 @@ class Client:
 
         self._reader: Optional[StreamReader] = None
         self._writer: Optional[StreamWriter] = None
-        self._iv: Optional[bytes] = None
         self._timestamp: Optional[int] = None
         self._crypter: Optional[Crypter] = None
 
-    async def _receive_init_packet(self):
+    async def _receive_init_packet(self) -> (bytes, int):
         fmt = "!128sL"
         packet = await self._reader.readexactly(struct.calcsize(fmt))
-        self._iv, self._timestamp = struct.unpack(fmt, packet)
-        logger.debug(f"Received init packet: timestamp: {self._timestamp}")
+        iv, timestamp = struct.unpack(fmt, packet)
+        logger.debug(f"Received init packet: timestamp={timestamp}")
+        return iv, timestamp
 
     async def connect(self):
         logger.debug(f"Connecting to {self._host}:{self._port}...")
         self._reader, self._writer = await asyncio.open_connection(
             host=self._host, port=self._port, loop=self._loop
         )
-        await self._receive_init_packet()
+        iv, self._timestamp = await self._receive_init_packet()
         self._crypter = get_crypter_by_method(
-            self._encryption_method, iv=self._iv, password=self._password
+            self._encryption_method, iv=iv, password=self._password
         )
 
     async def disconnect(self, flush=False):
