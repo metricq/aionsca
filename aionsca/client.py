@@ -22,7 +22,7 @@ import asyncio
 from asyncio import StreamReader, StreamWriter
 import logging
 import struct
-from typing import Optional
+from typing import Optional, Union
 
 from .state import State
 from .crypto import Method, Crypter, get_crypter_by_method
@@ -36,7 +36,7 @@ class Client:
         self,
         host: str = "localhost",
         port: int = 5667,
-        encryption_method: Method = Method.PLAINTEXT,
+        encryption_method: Union[Method, int, str] = Method.PLAINTEXT,
         password: str = "",
         loop: Optional[asyncio.AbstractEventLoop] = None,
     ):
@@ -46,8 +46,9 @@ class Client:
             Address of NSCA host to send reports to
         :param host: int
             Port of NSCA host
-        :param encryption_method: Method
-            Method used for encrypting report, see :py:class`Method`
+        :param encryption_method: Union[Method, int, str]
+            Method used for encrypting report, parsed with
+            :py:meth`aionsca.EncryptionMethod.parse`
         :param password: str
             Password used to encrypt reports
         :param loop: Optional[asyncio.AbstractEventLoop]
@@ -55,7 +56,7 @@ class Client:
         """
         self._host = host
         self._port = port
-        self._encryption_method = Method(encryption_method)
+        self._encryption_method = Method.parse(encryption_method)
         self._password: bytes = str(password).encode("utf-8")
         self._loop = loop
 

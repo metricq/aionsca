@@ -20,7 +20,7 @@
 
 from abc import abstractmethod
 from enum import IntEnum
-from typing import Callable
+from typing import Callable, Union
 import os
 
 import Crypto.Cipher.Blowfish
@@ -32,6 +32,23 @@ class Method(IntEnum):
 
     def __str__(self):
         return f"{self.name.lower()} ({self.value})"
+
+    @staticmethod
+    def parse(value: Union[str, int, "Method"]) -> "Method":
+        """Parse an encryption method from an integral value or string.
+
+        Input is either an integer as defined in the legacy `send_nsca.c`
+        config format or the name of the encryption method:
+        >>> assert Method.parse('8') == Method.parse("blowfish")
+
+        This function is idempotent, i.e. returns already valid isinstances of
+        :py:class`Method` unchanged:
+        >>> assert Method.parse(Method.parse(m)) == Method.parse(m)
+        """
+        try:
+            return Method(int(value))
+        except ValueError:
+            return Method[str(value).upper()]
 
 
 _crypters = dict()
@@ -105,7 +122,7 @@ class BlowfishCrypter(Pep272Crypter):
 
 def get_crypter_by_method(method: Method, iv: bytes, password: bytes, rng=os.urandom):
     try:
-        CrypterCls = _crypters[Method(method)]
+        CrypterCls = _crypters[method]
         return CrypterCls(password, iv, rng)
     except KeyError as e:
         raise ValueError(f"Unknown encryption method {method!s}") from e

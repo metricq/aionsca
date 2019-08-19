@@ -106,11 +106,9 @@ def parse_config_file(fp: TextIO) -> Dict[str, str]:
 async def main(host: str, port: int, delimiter: str, config_file: Optional[click.File]):
     try:
         config = parse_config_file(config_file) if config_file else dict()
-        config.setdefault("password", "")
-        config.setdefault("encryption_method", "0")
 
-        password = config["password"]
-        encryption_method = EncryptionMethod(int(config["encryption_method"]))
+        password = config.get("password", "")
+        encryption_method = config.get("encryption_method", EncryptionMethod.PLAINTEXT)
     except ValueError as e:
         logger.error(f"Failed to parse config file: {e}")
         sys.exit(1)
