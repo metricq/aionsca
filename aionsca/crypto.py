@@ -45,6 +45,10 @@ class Method(IntEnum):
         :py:class`Method` unchanged:
         >>> assert Method.parse(Method.parse(m)) == Method.parse(m)
         """
+
+        if isinstance(value, Method):
+            return value
+
         try:
             return Method(int(value))
         except ValueError:
