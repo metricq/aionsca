@@ -77,6 +77,7 @@ class Client:
         self._writer: Optional[StreamWriter] = None
         self._timestamp: Optional[int] = None
         self._crypter: Optional[Crypter] = None
+        self._send_lock = asyncio.Lock()
 
     async def _receive_init_packet(self) -> (bytes, int):
         fmt = "!128sL"
@@ -156,36 +157,37 @@ class Client:
             f"message={message!r}"
         )
 
-        for retry in range(1, retries + 1):
-            try:
-                report_bytes = report.encode(
-                    hostname=host,
-                    service=service,
-                    state=state,
-                    message=message,
-                    timestamp=self._timestamp,
-                )
-                encrypted = self._crypter.encrypt(report_bytes)
-                self._writer.write(encrypted)
-                await self._writer.drain()
-            except ConnectionResetError as e:
-                logger.warning(
-                    f"Connection reset by NSCA host, reconnecting ({retry}/{retries}): "
-                    f"{e}"
-                )
+        async with self._send_lock:
+            for retry in range(1, retries + 1):
                 try:
-                    await self.disconnect(flush=False)
-                    await self.connect()
+                    report_bytes = report.encode(
+                        hostname=host,
+                        service=service,
+                        state=state,
+                        message=message,
+                        timestamp=self._timestamp,
+                    )
+                    encrypted = self._crypter.encrypt(report_bytes)
+                    self._writer.write(encrypted)
+                    await self._writer.drain()
                 except ConnectionError as e:
                     logger.warning(
-                        f"Failed to reconnect to NSCA host ({retry}/{retries}): {e}"
+                        f"Error sending report to NSCA host: {e}, "
+                        f"reconnecting ({retry}/{retries})..."
                     )
+                    try:
+                        await self.disconnect(flush=False)
+                        await self.connect()
+                    except ConnectionError as e:
+                        logger.warning(
+                            f"Failed to reconnect to NSCA host ({retry}/{retries}): {e}"
+                        )
+                else:
+                    # no exceptions raised, report was sent successfully
+                    break
             else:
-                # no exceptions raised, report was sent successfully
-                break
-        else:
-            # retries exhausted
-            raise ConnectionError(
-                f"Failed to send report to NSCA host {self._host}:{self._port} "
-                f"after {retry} {'try' if retry == 1  else 'tries'}"
-            )
+                # retries exhausted
+                raise ConnectionError(
+                    f"Failed to send report to NSCA host {self._host}:{self._port} "
+                    f"after {retry} {'try' if retry == 1  else 'tries'}"
+                )
