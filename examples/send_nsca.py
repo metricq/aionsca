@@ -129,7 +129,10 @@ async def main(host: str, port: int, delimiter: str, config_file: Optional[click
                 raise ValueError(f"Invalid report")
 
             await client.send_report(
-                host=check_host, state=int(state), message=message, service=service
+                host=check_host,
+                state=int(state),
+                message=message.replace("\\n", "\n"),
+                service=service,
             )
 
 
