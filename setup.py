@@ -24,7 +24,7 @@ with open("README.rst", "r") as readme:
 
 setup(
     name="aionsca",
-    version="1.0.0.dev1",
+    version="1.0.0.dev2",
     author="Philipp Joram",
     author_email="philipp [dot] joram [at] tu-dresden [dot] de",
     description="Asynchronously send NSCA host and service reports",
