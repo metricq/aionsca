@@ -36,14 +36,14 @@ def random_chars(length: int) -> bytes:
 
 
 def pad_random(s: str, max_length: int) -> bytes:
-    to_pad = s.encode("utf-8")
+    to_pad = s.encode("utf-8") + b"\0"
     len_diff = max_length - len(to_pad)
     if len_diff > 0:
         to_pad += random_chars(len_diff)
     elif len_diff < 0:
         raise ValueError(
             f"Cannot pad string exceeding maximum length: "
-            f"length={len(s)} > max_length={max_length}"
+            f"length={len(s) + 1} > max_length={max_length}"
         )
     else:
         pass
