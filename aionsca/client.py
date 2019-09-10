@@ -26,7 +26,7 @@ from typing import Optional, Union
 
 from .state import State
 from .crypto import Method, Crypter, get_crypter_by_method
-from . import report
+from .protocol import InitPacket, ReportPacket
 
 logger = logging.getLogger(__name__)
 
@@ -80,9 +80,8 @@ class Client:
         self._send_lock = asyncio.Lock()
 
     async def _receive_init_packet(self) -> (bytes, int):
-        fmt = "!128sL"
-        packet = await self._reader.readexactly(struct.calcsize(fmt))
-        iv, timestamp = struct.unpack(fmt, packet)
+        packet = await self._reader.readexactly(InitPacket.SIZE)
+        iv, timestamp = InitPacket.unpack(packet)
         logger.debug(f"Received init packet: timestamp={timestamp}")
         return iv, timestamp
 
@@ -160,7 +159,7 @@ class Client:
         async with self._send_lock:
             for retry in range(1, retries + 1):
                 try:
-                    report_bytes = report.encode(
+                    report_bytes = ReportPacket.pack(
                         hostname=host,
                         service=service,
                         state=state,
