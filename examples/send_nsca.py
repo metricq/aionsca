@@ -85,7 +85,7 @@ def parse_config_file(fp: TextIO) -> Dict[str, str]:
 @click_log.simple_verbosity_option(logger)
 @click.argument("host", default="localhost", metavar="ADDRESS")
 @click.option(
-    "--port", "-p", default=5667, type=int, metavar="NUM", help="NSCA host port"
+    "--port", "-p", default=5667, type=int, metavar="NUM", help="NSCA server port"
 )
 @click.option(
     "--delimiter",

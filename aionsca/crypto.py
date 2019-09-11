@@ -81,11 +81,20 @@ class Crypter(metaclass=_MetaCrypter):
             f"encrypt() not implemented for crypter {self.method!s}"
         )
 
+    @abstractmethod
+    def decrypt(self, _message: bytes) -> bytes:
+        raise NotImplementedError(
+            f"decrypt() not implemented for crypter {self.method!s}"
+        )
+
 
 class PlaintextCrypter(Crypter):
     method = Method.PLAINTEXT
 
     def encrypt(self, message) -> bytes:
+        return bytes(message)
+
+    def decrypt(self, message) -> bytes:
         return bytes(message)
 
 
@@ -116,6 +125,9 @@ class Pep272Crypter(Crypter):
 
     def encrypt(self, message):
         return self.crypter.encrypt(message)
+
+    def decrypt(self, message):
+        return self.crypter.decrypt(message)
 
 
 class BlowfishCrypter(Pep272Crypter):
